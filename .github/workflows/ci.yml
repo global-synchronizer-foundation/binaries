@@ -1,0 +1,32 @@
+name: Binaries CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  copy-binaries:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPO: ${{ github.repository }}
+      GITHUB_ACTOR: ${{ github.actor }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq skopeo make
+          curl -fsSL -o /tmp/get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+          chmod 700 /tmp/get_helm.sh
+          /tmp/get_helm.sh
+
+      - name: Run the Script
+        run: |
+          chmod +x ./ci/gsf-copy-binaries.sh && ./ci/gsf-copy-binaries.sh
+
