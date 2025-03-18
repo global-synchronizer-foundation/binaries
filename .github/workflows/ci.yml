@@ -30,3 +30,23 @@ jobs:
         run: |
           chmod +x ./ci/gsf-copy-binaries.sh && ./ci/gsf-copy-binaries.sh
 
+      - name: Get GSF Devnet Version
+        run: |
+          echo "GSF_DEVNET_VERSION=$(curl -s https://docs.dev.global.canton.network.sync.global/info | jq -r .sv.version)" >> $GITHUB_ENV
+
+      - name: Announce the release to validator-operators
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "Splice release ${{ env.GSF_DEVNET_VERSION }} is ready for deployment on DevNet"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: |
+                    :tada: Splice release `${{ env.GSF_DEVNET_VERSION }}` is ready for deployment on DevNet, and is available from the GSF
+                    :partydocker: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
+                    *SV node status here*: https://sync.global/sv-network
+                    *Release notes here*: https://docs.dev.sync.global/release_notes.html
