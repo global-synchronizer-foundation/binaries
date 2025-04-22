@@ -47,6 +47,6 @@ jobs:
                   type: "mrkdwn"
                   text: |
                     :tada: Splice release `${{ env.GSF_DEVNET_VERSION }}` is ready for deployment on DevNet, and is available from the GSF
-                    :partydocker: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
+                    :ship: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
                     *SV node status here*: https://sync.global/sv-network
                     *Release notes here*: https://docs.dev.sync.global/release_notes.html
