@@ -50,3 +50,34 @@ jobs:
                     :ship: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
                     *SV node status here*: https://sync.global/sv-network
                     *Release notes here*: https://docs.dev.sync.global/release_notes.html
+
+      - name: Announce to validator-announce@lists.sync.global
+        env: 
+          VALIODATOR_OPERATORS_GROUP_ID: "133138"
+        run: |
+          LOGIN_RESPONSE_COOKIES=$(curl -XPOST -c cookies.txt "https://lists.sync.global/api/v1/login" \
+            -d "email=${{ secrets.GROUPS_IO_USER }}&password=${{ secrets.GROUPS_IO_PASS }}")
+          CSRF_TOKEN=$(echo $LOGIN_RESPONSE_COOKIES | jq -r '.user.csrf_token')
+          DRAFT_ID=$(curl "https://lists.sync.global/api/v1/newdraft" \
+            -b "cookies.txt" \
+            -d "draft_type=draft_type_post" \
+            -d "group_id=${VALIODATOR_OPERATORS_GROUP_ID}&csrf=${CSRF_TOKEN}" \
+            | jq -r '.id')
+
+          # Replace version in template
+          sed "s/{{VERSION}}/${{ env.GSF_DEVNET_VERSION }}/g" ./ci/message_template.html > message.html
+
+          curl "https://lists.sync.global/api/v1/updatedraft" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -b "cookies.txt" \
+            -d "draft_id=${DRAFT_ID}" \
+            -d "group_id=${VALIODATOR_OPERATORS_GROUP_ID}&csrf=${CSRF_TOKEN}" \
+            -d "subject=Splice release ${{ env.GSF_DEVNET_VERSION }} is ready for deployment on DevNet" \
+            --data-urlencode "body@message.html"
+          
+          curl "https://lists.sync.global/api/v1/postdraft" \
+            -b "cookies.txt" \
+            -d "draft_id=${DRAFT_ID}" \
+            -d "group_id=${VALIODATOR_OPERATORS_GROUP_ID}&csrf=${CSRF_TOKEN}"
+
+          rm cookies.txt message.html
