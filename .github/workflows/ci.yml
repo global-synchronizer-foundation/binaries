@@ -52,32 +52,51 @@ jobs:
                     *Release notes here*: https://docs.dev.sync.global/release_notes.html
 
       - name: Announce to validator-announce@lists.sync.global
-        env: 
+        env:
           VALIODATOR_OPERATORS_GROUP_ID: "133138"
+          GROUPS_IO_USER: ${{ secrets.GROUPS_IO_USER }}
+          GROUPS_IO_PASS: ${{ secrets.GROUPS_IO_PASS }}
         run: |
-          LOGIN_RESPONSE_COOKIES=$(curl -XPOST -c cookies.txt "https://lists.sync.global/api/v1/login" \
-            -d "email=${{ secrets.GROUPS_IO_USER }}&password=${{ secrets.GROUPS_IO_PASS }}")
-          CSRF_TOKEN=$(echo $LOGIN_RESPONSE_COOKIES | jq -r '.user.csrf_token')
-          DRAFT_ID=$(curl "https://lists.sync.global/api/v1/newdraft" \
-            -b "cookies.txt" \
-            -d "draft_type=draft_type_post" \
-            -d "group_id=${VALIODATOR_OPERATORS_GROUP_ID}&csrf=${CSRF_TOKEN}" \
-            | jq -r '.id')
+          trap 'rm -f password.txt cookies.txt message.html' EXIT
 
-          # Replace version in template
-          sed "s/{{VERSION}}/${{ env.GSF_DEVNET_VERSION }}/g" ./ci/message_template.html > message.html
+          curl_options=(-fsS)
+          echo "password=$GROUPS_IO_PASS" > password.txt
 
-          curl "https://lists.sync.global/api/v1/updatedraft" \
+          LOGIN_RESPONSE_COOKIES=$(
+            curl "${curl_options[@]}" \
+              "https://lists.sync.global/api/v1/login" \
+              -c "cookies.txt" \
+              -d "email=$GROUPS_IO_USER" \
+              -d @password.txt
+          )   
+
+          CSRF_TOKEN=$(echo "$LOGIN_RESPONSE_COOKIES" | jq -er '.user.csrf_token')
+              
+          DRAFT_ID=$(
+            curl "${curl_options[@]}" \
+              "https://lists.sync.global/api/v1/newdraft" \
+              -b "cookies.txt" \
+              -d "csrf=$CSRF_TOKEN" \
+              -d "draft_type=draft_type_post" \
+              -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID" |
+            jq -er '.id'
+          )
+
+          VERSION=${{ env.GSF_DEVNET_VERSION }} envsubst < ./ci/message_template.html > message.html
+
+          curl "${curl_options[@]}" \ 
+            "https://lists.sync.global/api/v1/updatedraft" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -b "cookies.txt" \
-            -d "draft_id=${DRAFT_ID}" \
-            -d "group_id=${VALIODATOR_OPERATORS_GROUP_ID}&csrf=${CSRF_TOKEN}" \
+            -d "csrf=$CSRF_TOKEN" \
+            -d "draft_id=$DRAFT_ID" \
+            -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID" \
             -d "subject=Splice release ${{ env.GSF_DEVNET_VERSION }} is ready for deployment on DevNet" \
             --data-urlencode "body@message.html"
-          
-          curl "https://lists.sync.global/api/v1/postdraft" \
-            -b "cookies.txt" \
-            -d "draft_id=${DRAFT_ID}" \
-            -d "group_id=${VALIODATOR_OPERATORS_GROUP_ID}&csrf=${CSRF_TOKEN}"
 
-          rm cookies.txt message.html
+          curl "${curl_options[@]}" \
+            "https://lists.sync.global/api/v1/postdraft" \
+            -b "cookies.txt" \
+            -d "csrf=$CSRF_TOKEN" \
+            -d "draft_id=$DRAFT_ID" \
+            -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID"
