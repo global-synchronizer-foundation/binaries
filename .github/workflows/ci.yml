@@ -82,7 +82,7 @@ jobs:
             jq -er '.id'
           )
 
-          VERSION=${{ env.GSF_DEVNET_VERSION }} envsubst < ./ci/message_template.html > message.html
+          VERSION=${{ env.GSF_DEVNET_VERSION }} envsubst < ./ci/splice_release_message.html.template > message.html
 
           curl "${curl_options[@]}" \ 
             "https://lists.sync.global/api/v1/updatedraft" \
