@@ -60,20 +60,22 @@ jobs:
           trap 'rm -f password.txt cookies.txt message.html' EXIT
 
           curl_options=(-fsS)
-          echo "password=$GROUPS_IO_PASS" > password.txt
 
           LOGIN_RESPONSE_COOKIES=$(
-            curl "${curl_options[@]}" \
+            curl "${curl_options[@]}" -X POST \
               "https://lists.sync.global/api/v1/login" \
               -c "cookies.txt" \
               -d "email=$GROUPS_IO_USER" \
-              -d @password.txt
+              -d "password=$GROUPS_IO_PASS"
           )   
+          ls cookies.txt
 
           CSRF_TOKEN=$(echo "$LOGIN_RESPONSE_COOKIES" | jq -er '.user.csrf_token')
+          echo "CSRF Token: $CSRF_TOKEN"
               
+          echo "Creating a new draft"
           DRAFT_ID=$(
-            curl "${curl_options[@]}" \
+            curl "${curl_options[@]}" -X POST \
               "https://lists.sync.global/api/v1/newdraft" \
               -b "cookies.txt" \
               -d "csrf=$CSRF_TOKEN" \
@@ -81,10 +83,12 @@ jobs:
               -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID" |
             jq -er '.id'
           )
+          echo "Draft ID: $DRAFT_ID"
 
           VERSION=$GSF_DEVNET_VERSION envsubst < ./ci/splice_release_message.html.template > message.html
 
-          curl "${curl_options[@]}" \ 
+          echo "updating draft with message content"
+          curl "${curl_options[@]}" -X POST \
             "https://lists.sync.global/api/v1/updatedraft" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -b "cookies.txt" \
@@ -94,7 +98,8 @@ jobs:
             -d "subject=Splice release ${{ env.GSF_DEVNET_VERSION }} is ready for deployment on DevNet" \
             --data-urlencode "body@message.html"
 
-          curl "${curl_options[@]}" \
+          echo "Posting the draft"
+          curl "${curl_options[@]}" -X POST \
             "https://lists.sync.global/api/v1/postdraft" \
             -b "cookies.txt" \
             -d "csrf=$CSRF_TOKEN" \
