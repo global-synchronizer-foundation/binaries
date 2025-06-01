@@ -72,7 +72,7 @@ jobs:
 
           CSRF_TOKEN=$(echo "$LOGIN_RESPONSE_COOKIES" | jq -er '.user.csrf_token')
           echo "CSRF Token: $CSRF_TOKEN"
-              
+
           echo "Creating a new draft"
           DRAFT_ID=$(
             curl "${curl_options[@]}" -X POST \
