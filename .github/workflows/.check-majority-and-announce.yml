@@ -21,6 +21,8 @@ on:
       GROUPS_IO_PASS:
         required: true
 
+permissions: {}
+
 jobs:
   check-and-announce:
     runs-on: ubuntu-latest
@@ -93,7 +95,7 @@ jobs:
       # Announcing the release for all environments
       - name: Announce the release to validator-operators
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 #v2.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook

@@ -11,7 +11,7 @@ gsf_version() {
 }
 
 check_svs_majority() {
-    ALL_VERSIONS=$(curl -sSm5 ${GSF_DOCS}/versions | \
+    ALL_VERSIONS=$(curl -sSm5 "${GSF_DOCS}/versions" | \
       awk -F',' 'NR > 1 { gsub(/^ +| +$/, "", $3); print $3 }'
       )
     SVS_WITH_GSF_VERSION=$(echo "$ALL_VERSIONS" | grep -c "$GSF_VERSION")

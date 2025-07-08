@@ -3,13 +3,14 @@ name: Copy Binaries and Announce Release
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-  packages: write
+permissions: {}
 
 jobs:
   devnet:
     uses: ./.github/workflows/.check-majority-and-announce.yml
+    permissions:
+      contents: write # Need to write to announce-tracking branch
+      packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice. 
     with:
       environment: DevNet
       info_url: https://docs.dev.global.canton.network.sync.global
@@ -20,6 +21,8 @@ jobs:
 
   testnet:
     uses: ./.github/workflows/.check-majority-and-announce.yml
+    permissions:
+      contents: write # Need to write to announce-tracking branch
     with:
       environment: TestNet
       info_url: https://docs.test.global.canton.network.sync.global
@@ -30,6 +33,8 @@ jobs:
 
   mainnet:
     uses: ./.github/workflows/.check-majority-and-announce.yml
+    permissions:
+      contents: write # Need to write to announce-tracking branch
     with:
       environment: MainNet
       info_url: https://docs.global.canton.network.sync.global
