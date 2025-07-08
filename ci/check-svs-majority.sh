@@ -4,7 +4,6 @@ set -euo pipefail
 
 GSF_ENV=$1
 GSF_DOCS=$2
-GSF_ORG="global-synchronizer-foundation"
 SVS_MAJORITY="false"
 
 gsf_version() {

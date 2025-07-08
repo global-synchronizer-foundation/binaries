@@ -36,6 +36,14 @@ jobs:
           ref: announce-tracking
           path: tracking
 
+      - name: Get GSF version and docs path
+        id: version
+        run: |
+          GSF_VERSION=$(curl -sSm5 "${{ inputs.info_url }}/info" | jq -r .sv.version)
+          GSF_DOCS=$(echo "${{ inputs.info_url }}" | sed 's/global.canton.network.//')
+          echo "GSF_VERSION=$GSF_VERSION" >> $GITHUB_ENV
+          echo "GSF_DOCS=$GSF_DOCS" >> $GITHUB_ENV
+
       - name: Run SVS majority check
         id: check-majority
         run: |
@@ -67,17 +75,9 @@ jobs:
             echo "Version ${{ env.GSF_VERSION }} has not been announced for ${{ inputs.environment }}." >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Get GSF version and docs path
-        id: version
-        run: |
-          GSF_VERSION=$(curl -sSm5 "${{ inputs.info_url }}/info" | jq -r .sv.version)
-          GSF_DOCS=$(echo "${{ inputs.info_url }}" | sed 's/global.canton.network.//')
-          echo "GSF_VERSION=$GSF_VERSION" >> $GITHUB_ENV
-          echo "GSF_DOCS=$GSF_DOCS" >> $GITHUB_ENV
-
       # Copying binaries for DevNet only
       - name: Set up tools
-        if : ${{ inputs.environment == 'DevNet' && steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false' }}
+        if: ${{ inputs.environment == 'DevNet' && steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y jq skopeo make
@@ -86,7 +86,7 @@ jobs:
           /tmp/get_helm.sh
 
       - name: Run copy-binaries Script
-        if : ${{ inputs.environment == 'DevNet' && steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false' }}
+        if: ${{ inputs.environment == 'DevNet' && steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false' }}
         run: |
           chmod +x ./main/ci/gsf-copy-binaries.sh && ./main/ci/gsf-copy-binaries.sh
 
@@ -112,10 +112,10 @@ jobs:
       - name: Announce to validator-announce@lists.sync.global
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
         env:
-          VALIODATOR_OPERATORS_GROUP_ID: ${{ inputs.validator_operators_group_id }}
+          VALIDATOR_OPERATORS_GROUP_ID: ${{ inputs.validator_operators_group_id }}
           GROUPS_IO_USER: ${{ secrets.GROUPS_IO_USER }}
           GROUPS_IO_PASS: ${{ secrets.GROUPS_IO_PASS }}
-          GSF_ENVIRONMENT: ${{ input.environment }}
+          GSF_ENVIRONMENT: ${{ inputs.environment }}
         run: |
           trap 'rm -f password.txt cookies.txt message.html' EXIT
 
@@ -141,7 +141,7 @@ jobs:
               -b "cookies.txt" \
               -d "csrf=$CSRF_TOKEN" \
               -d "draft_type=draft_type_post" \
-              -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID" |
+              -d "group_id=$VALIDATOR_OPERATORS_GROUP_ID" |
             jq -er '.id'
           )
           echo "Draft ID: $DRAFT_ID"
@@ -157,7 +157,7 @@ jobs:
             -b "cookies.txt" \
             -d "csrf=$CSRF_TOKEN" \
             -d "draft_id=$DRAFT_ID" \
-            -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID" \
+            -d "group_id=$VALIDATOR_OPERATORS_GROUP_ID" \
             -d "subject=Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ inputs.environment }}" \
             --data-urlencode "body@message.html"
 
@@ -167,7 +167,7 @@ jobs:
             -b "cookies.txt" \
             -d "csrf=$CSRF_TOKEN" \
             -d "draft_id=$DRAFT_ID" \
-            -d "group_id=$VALIODATOR_OPERATORS_GROUP_ID"
+            -d "group_id=$VALIDATOR_OPERATORS_GROUP_ID"
 
       - name: Update announced version file
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
