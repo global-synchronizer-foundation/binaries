@@ -29,6 +29,7 @@ jobs:
     permissions:
       contents: write # Need to write to announce-tracking branch
       packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice.
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -167,7 +168,7 @@ jobs:
           echo "Draft ID: $DRAFT_ID"
 
           VERSION=$GSF_VERSION envsubst < ./main/ci/splice_release_message.html.template > message.html
-          ENVIRONMENT=$GSF_ENVIRONMENT envsubst < message.html > message.html
+          ENVIRONMENT=$GSF_ENV envsubst < message.html > message.html
           DOCS=$GSF_DOCS envsubst < message.html > message.html
 
           echo "Updating draft with message content"

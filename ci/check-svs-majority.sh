@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# check-svs-majority.sh
+# This script checks if the current GSF version is present in at least 2/3 of the SVs.
+# It fetches the GSF version from the provided GSF_DOCS URL and compares it against the list of SV versions.
+# If the majority condition is met, it sets the SVS_MAJORITY environment variable to "true", otherwise "false".
+# The result is written to the GITHUB_OUTPUT file as "svs_majority".
+# Expects two arguments:
+# 1. GSF_ENV: The environment (e.g., DevNet, TestNet, MainNet).
+# 2. GSF_DOCS: The URL to the GSF documentation.
+
 set -euo pipefail
 
 GSF_ENV=$1
