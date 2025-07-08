@@ -26,6 +26,9 @@ permissions: {}
 jobs:
   check-and-announce:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Need to write to announce-tracking branch
+      packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice.
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

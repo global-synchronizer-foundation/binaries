@@ -23,6 +23,7 @@ jobs:
     uses: ./.github/workflows/.check-majority-and-announce.yml
     permissions:
       contents: write # Need to write to announce-tracking branch
+      packages: read
     with:
       environment: TestNet
       info_url: https://docs.test.global.canton.network.sync.global
@@ -35,6 +36,7 @@ jobs:
     uses: ./.github/workflows/.check-majority-and-announce.yml
     permissions:
       contents: write # Need to write to announce-tracking branch
+      packages: read
     with:
       environment: MainNet
       info_url: https://docs.global.canton.network.sync.global
