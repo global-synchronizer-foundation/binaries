@@ -6,4 +6,4 @@ For GitHub Workflows:
 - shell snippets (under `run:`) don't have templated variables and environment variables are used instead
 
 For shell scripts:
-- conforms ShellCheck
+- conforms to ShellCheck
