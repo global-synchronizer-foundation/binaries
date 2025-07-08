@@ -16,7 +16,6 @@ check_svs_majority() {
       )
     SVS_WITH_GSF_VERSION=$(echo "$ALL_VERSIONS" | grep -c "$GSF_VERSION")
     ALL_VERSIONS_COUNT=$(echo "$ALL_VERSIONS" | wc -l)
-    MAJORITY=$(echo "$ALL_VERSIONS" | sort | uniq -c | sort -nr | head -n 1)
     echo "GSF ${GSF_ENV} version:               $GSF_VERSION"
     echo "SVs with GSF version:             $SVS_WITH_GSF_VERSION"
     echo "SVs needed for 2/3 majority:      $(((ALL_VERSIONS_COUNT +1) * 2 / 3))"

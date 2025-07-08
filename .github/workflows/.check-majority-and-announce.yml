@@ -41,19 +41,28 @@ jobs:
           ref: announce-tracking
           path: tracking
 
-      - name: Get GSF version and docs path
-        id: version
+      - name: Set variables and Get GSF version and docs path
+        id: variables
+        env:
+          GSF_INFO_URL: ${{ inputs.info_url }}
+          GSF_ENV: ${{ inputs.environment }}
         run: |
-          GSF_VERSION=$(curl -sSm5 "${{ inputs.info_url }}/info" | jq -r .sv.version)
-          GSF_DOCS=$(echo "${{ inputs.info_url }}" | sed 's/global.canton.network.//')
+          GSF_VERSION=$(curl -sSm5 "${GSF_INFO_URL}/info" | jq -r .sv.version)
+          GSF_DOCS=$(echo "${GSF_INFO_URL}" | sed 's/global.canton.network.//')
+          echo "GSF_INFO_URL=${GSF_INFO_URL}" >> $GITHUB_ENV
+          echo "GSF_ENV=${GSF_ENV}" >> $GITHUB_ENV
           echo "GSF_VERSION=$GSF_VERSION" >> $GITHUB_ENV
           echo "GSF_DOCS=$GSF_DOCS" >> $GITHUB_ENV
 
       - name: Run SVS majority check
         id: check-majority
+        env:
+          GSF_INFO_URL: ${{ env.GSF_INFO_URL }}
+          GSF_ENV: ${{ env.GSF_ENV }}
+          GITHUB_OUTPUT: $GITHUB_OUTPUT
         run: |
           chmod +x ./main/ci/check-svs-majority.sh
-          result=$(./main/ci/check-svs-majority.sh "${{ inputs.environment }}" "${{ inputs.info_url }}")
+          result=$(./main/ci/check-svs-majority.sh "${GSF_ENV}" "${GSF_INFO_URL}")
           echo "$result"
 
           {
@@ -62,22 +71,22 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-        env:
-          GITHUB_OUTPUT: $GITHUB_OUTPUT
-
       - name: Check if version already announced
         id: check-announced
+        env:
+          GSF_ENV: ${{ env.GSF_ENV }}
+          GSF_VERSION: ${{ env.GSF_VERSION }}
         run: |
-          ENV_LOWER=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+          ENV_LOWER=$(echo "${GSF_ENV}" | tr '[:upper:]' '[:lower:]')
           FILE="tracking/ci/announced-${ENV_LOWER}.txt"
-          if [ -f "$FILE" ] && grep -q "${{ env.GSF_VERSION }}" "$FILE"; then
+          if [ -f "$FILE" ] && grep -q "${GSF_VERSION}" "$FILE"; then
             echo "already_announced=true" >> $GITHUB_OUTPUT
-            echo "Version ${{ env.GSF_VERSION }} has already been announced for ${{ inputs.environment }}."
-            echo "Version ${{ env.GSF_VERSION }} has already been announced for ${{ inputs.environment }}." >> $GITHUB_STEP_SUMMARY
+            echo "Version ${GSF_VERSION} has already been announced for ${GSF_ENV}."
+            echo "Version ${GSF_VERSION} has already been announced for ${GSF_ENV}." >> $GITHUB_STEP_SUMMARY
           else
             echo "already_announced=false" >> $GITHUB_OUTPUT
-            echo "Version ${{ env.GSF_VERSION }} has not been announced for ${{ inputs.environment }}."
-            echo "Version ${{ env.GSF_VERSION }} has not been announced for ${{ inputs.environment }}." >> $GITHUB_STEP_SUMMARY
+            echo "Version ${GSF_VERSION} has not been announced for ${GSF_ENV}."
+            echo "Version ${GSF_VERSION} has not been announced for ${GSF_ENV}." >> $GITHUB_STEP_SUMMARY
           fi
 
       # Copying binaries for DevNet only
@@ -98,21 +107,25 @@ jobs:
       # Announcing the release for all environments
       - name: Announce the release to validator-operators
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
+        env:
+          GSF_VERSION: ${{ env.GSF_VERSION }}
+          GSF_ENV: ${{ env.GSF_ENV }}
+          GSF_DOCS: ${{ env.GSF_DOCS }}
         uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 #v2.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: "Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ inputs.environment }}"
+            text: "Splice release ${GSF_VERSION} is ready for deployment on ${GSF_ENV}"
             blocks:
               - type: "section"
                 text:
                   type: "mrkdwn"
                   text: |
-                    :tada: Splice release `${{ env.GSF_VERSION }}` is ready for deployment on ${{ inputs.environment }}, and is available from the GSF
+                    :tada: Splice release `${GSF_VERSION}` is ready for deployment on ${GSF_ENV}, and is available from the GSF
                     :ship: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
                     *SV node status here*: https://sync.global/sv-network
-                    *Release notes here*: ${{ env.GSF_DOCS }}/release_notes.html
+                    *Release notes here*: ${GSF_DOCS}/release_notes.html
 
       - name: Announce to validator-announce@lists.sync.global
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
@@ -120,7 +133,9 @@ jobs:
           VALIDATOR_OPERATORS_GROUP_ID: ${{ inputs.validator_operators_group_id }}
           GROUPS_IO_USER: ${{ secrets.GROUPS_IO_USER }}
           GROUPS_IO_PASS: ${{ secrets.GROUPS_IO_PASS }}
-          GSF_ENVIRONMENT: ${{ inputs.environment }}
+          GSF_VERSION: ${{ env.GSF_VERSION }}
+          GSF_ENV: ${{ env.GSF_ENV }}
+          GSF_DOCS: ${{ env.GSF_DOCS }}
         run: |
           trap 'rm -f password.txt cookies.txt message.html' EXIT
 
@@ -163,7 +178,7 @@ jobs:
             -d "csrf=$CSRF_TOKEN" \
             -d "draft_id=$DRAFT_ID" \
             -d "group_id=$VALIDATOR_OPERATORS_GROUP_ID" \
-            -d "subject=Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ inputs.environment }}" \
+            -d "subject=Splice release ${GSF_VERSION} is ready for deployment on ${GSF_ENV}" \
             --data-urlencode "body@message.html"
 
           echo "Posting the draft"
@@ -178,7 +193,7 @@ jobs:
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
         run: |
           cd tracking
-          ENV_LOWER=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+          ENV_LOWER=$(echo "${GSF_ENV}" | tr '[:upper:]' '[:lower:]')
           FILE="./ci/announced-${ENV_LOWER}.txt"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -189,9 +204,9 @@ jobs:
 
           while [ $COUNT -lt $MAX_RETRIES ]; do
             git pull --rebase origin announce-tracking
-            echo "${{ env.GSF_VERSION }}" >> "$FILE" && \
+            echo "${GSF_VERSION}" >> "$FILE" && \
             git add "$FILE" && \
-            git commit -m "Announced ${{ inputs.environment }} ${{ env.GSF_VERSION }}" && \
+            git commit -m "Announced ${GSF_ENV} ${GSF_VERSION}" && \
             git push origin announce-tracking && SUCCESS=true && break
             COUNT=$((COUNT + 1))
             echo "Retrying push... attempt $COUNT"
