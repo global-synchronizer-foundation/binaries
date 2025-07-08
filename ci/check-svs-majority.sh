@@ -7,7 +7,7 @@ GSF_DOCS=$2
 SVS_MAJORITY="false"
 
 gsf_version() {
-    GSF_VERSION=$(curl -sSm5 ${GSF_DOCS}/info | jq -r .sv.version)
+    GSF_VERSION=$(curl -sSm5 "${GSF_DOCS}/info" | jq -r .sv.version)
 }
 
 check_svs_majority() {
