@@ -8,6 +8,7 @@
 # Expects two arguments:
 # 1. GSF_ENV: The environment (e.g., DevNet, TestNet, MainNet).
 # 2. GSF_DOCS: The URL to the GSF documentation.
+# Usage: ./check-svs-majority.sh <GSF_ENV> <GSF_DOCS_URL>
 
 set -euo pipefail
 
@@ -15,27 +16,50 @@ GSF_ENV=$1
 GSF_DOCS=$2
 SVS_MAJORITY="false"
 
+log() {
+    local level="$1"
+    shift
+    echo -e "[$level] $*"
+}
+
+fatal() {
+    log "FATAL" "$1"
+    echo "svs_majority=false" >> "$GITHUB_OUTPUT"
+    exit 1
+}
+
 gsf_version() {
-    GSF_VERSION=$(curl -sSm5 "${GSF_DOCS}/info" | jq -r .sv.version)
+    log "INFO" "Fetching GSF version from: ${GSF_DOCS}/info"
+    GSF_VERSION=$(curl -sSf --max-time 5 "${GSF_DOCS}/info" | jq -er '.sv.version') \
+        || fatal "Failed to fetch or parse GSF version"
 }
 
 check_svs_majority() {
+    log "INFO" "Fetching all SV versions from: ${GSF_DOCS}/versions"
     ALL_VERSIONS=$(curl -sSm5 "${GSF_DOCS}/versions" | \
       awk -F',' 'NR > 1 { gsub(/^ +| +$/, "", $3); print $3 }'
-      )
-    SVS_WITH_GSF_VERSION=$(echo "$ALL_VERSIONS" | grep -c "$GSF_VERSION")
+      ) || fatal "Failed to fetch or parse SV version list"
+    SVS_WITH_GSF_VERSION=$(echo "$ALL_VERSIONS" | grep -cxF "$GSF_VERSION") || true
     ALL_VERSIONS_COUNT=$(echo "$ALL_VERSIONS" | wc -l)
-    echo "GSF ${GSF_ENV} version:               $GSF_VERSION"
-    echo "SVs with GSF version:             $SVS_WITH_GSF_VERSION"
-    echo "SVs needed for 2/3 majority:      $(((ALL_VERSIONS_COUNT +1) * 2 / 3))"
-    echo "Total SVs:                        $ALL_VERSIONS_COUNT"
-    echo "SVs with GSF version percentage:  $((SVS_WITH_GSF_VERSION * 100 / ALL_VERSIONS_COUNT))%"
-    if [ "$SVS_WITH_GSF_VERSION" -lt "$(((ALL_VERSIONS_COUNT +1) * 2 / 3))" ]; then
-        export SVS_MAJORITY="false"
-        echo -e "[ERROR] Not enough SVs with GSF version for majority"
+
+    if [ "$ALL_VERSIONS_COUNT" -eq 0 ]; then
+        fatal "No SV versions found"
+    fi
+
+    REQUIRED_MAJORITY=$(((ALL_VERSIONS_COUNT + 1) * 2 / 3))
+
+    log "INFO" "GSF ${GSF_ENV} version:             $GSF_VERSION"
+    log "INFO" "SVs with GSF version:             $SVS_WITH_GSF_VERSION"
+    log "INFO" "SVs needed for 2/3 majority:      $REQUIRED_MAJORITY"
+    log "INFO" "Total SVs:                        $ALL_VERSIONS_COUNT"
+    log "INFO" "SVs with GSF version percentage:  $((SVS_WITH_GSF_VERSION * 100 / ALL_VERSIONS_COUNT))%"
+
+    if [ "$SVS_WITH_GSF_VERSION" -lt "$REQUIRED_MAJORITY" ]; then
+        SVS_MAJORITY="false"
+        log "ERROR" "Not enough SVs with GSF version for majority"
     else
-        export SVS_MAJORITY="true"
-        echo -e "[INFO] Enough SVs with GSF version for majority"
+        SVS_MAJORITY="true"
+        log "INFO" "Enough SVs with GSF version for majority"
     fi
 }
 
