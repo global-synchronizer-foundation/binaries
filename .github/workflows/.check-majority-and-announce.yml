@@ -74,12 +74,12 @@ jobs:
           FILE="tracking/ci/announced-${ENV_LOWER}.txt"
           if [ -f "$FILE" ] && grep -qxF "${GSF_VERSION}" "$FILE"; then
             echo "already_announced=true" >> $GITHUB_OUTPUT
-            echo "Version ${GSF_VERSION} has already been announced for ${GSF_ENV}."
-            echo "Version ${GSF_VERSION} has already been announced for ${GSF_ENV}." >> $GITHUB_STEP_SUMMARY
+            echo "Version ${GSF_VERSION} has already been announced for ${GSF_ENV}." | \
+              tee -a "$GITHUB_STEP_SUMMARY"
           else
             echo "already_announced=false" >> $GITHUB_OUTPUT
-            echo "Version ${GSF_VERSION} has not been announced for ${GSF_ENV}."
-            echo "Version ${GSF_VERSION} has not been announced for ${GSF_ENV}." >> $GITHUB_STEP_SUMMARY
+            echo "Version ${GSF_VERSION} has not been announced for ${GSF_ENV}." | \
+              tee -a "$GITHUB_STEP_SUMMARY"
           fi
 
       # Copying binaries for DevNet only
@@ -95,7 +95,7 @@ jobs:
       - name: Run copy-binaries Script
         if: ${{ inputs.environment == 'DevNet' && steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false' }}
         run: |
-          chmod +x ./main/ci/gsf-copy-binaries.sh && ./main/ci/gsf-copy-binaries.sh
+          ./main/ci/gsf-copy-binaries.sh
 
       # Announcing the release for all environments
       - name: Announce the release to validator-operators
@@ -192,7 +192,7 @@ jobs:
           COUNT=0
           SUCCESS=false
 
-          while [ $COUNT -lt $MAX_RETRIES ]; do
+          while [ $COUNT -le $MAX_RETRIES ]; do
             echo "[INFO] Attempt $((COUNT + 1)) to rebase and push"
           
             git fetch origin "$BRANCH"
