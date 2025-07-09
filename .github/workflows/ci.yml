@@ -11,7 +11,6 @@ jobs:
     permissions:
       contents: write # Need to write to announce-tracking branch
       packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice. 
-    timeout-minutes: 20
     with:
       environment: DevNet
       info_url: https://docs.dev.global.canton.network.sync.global
@@ -25,7 +24,6 @@ jobs:
     permissions:
       contents: write # Need to write to announce-tracking branch
       packages: read
-    timeout-minutes: 10
     with:
       environment: TestNet
       info_url: https://docs.test.global.canton.network.sync.global
@@ -39,7 +37,6 @@ jobs:
     permissions:
       contents: write # Need to write to announce-tracking branch
       packages: read
-    timeout-minutes: 10
     with:
       environment: MainNet
       info_url: https://docs.global.canton.network.sync.global
