@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Need to write to announce-tracking branch
-      packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice.
     timeout-minutes: 20
     steps:
       - name: Checkout code
