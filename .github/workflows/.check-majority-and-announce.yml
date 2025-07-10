@@ -29,6 +29,10 @@ jobs:
     permissions:
       contents: write # Need to write to announce-tracking branch
       packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice.
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPO: ${{ github.repository }}
+      GITHUB_ACTOR: ${{ github.actor }}
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -105,16 +109,16 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: "Splice release ${GSF_VERSION} is ready for deployment on ${GSF_ENV}"
+            text: "Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ env.GSF_ENV }}"
             blocks:
               - type: "section"
                 text:
                   type: "mrkdwn"
                   text: |
-                    :tada: Splice release `${GSF_VERSION}` is ready for deployment on ${GSF_ENV}, and is available from the GSF
+                    :tada: Splice release `${{ env.GSF_VERSION }}` is ready for deployment on ${{ env.GSF_ENV }}, and is available from the GSF
                     :ship: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
                     *SV node status here*: https://sync.global/sv-network
-                    *Release notes here*: ${GSF_DOCS}/release_notes.html
+                    *Release notes here*: ${{ env.GSF_DOCS }}/release_notes.html
 
       - name: Announce to validator-announce@lists.sync.global
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
@@ -152,9 +156,7 @@ jobs:
           )
           echo "Draft ID: $DRAFT_ID"
 
-          VERSION=$GSF_VERSION envsubst < ./main/ci/splice_release_message.html.template > message.html
-          ENVIRONMENT=$GSF_ENV envsubst < message.html > message.html
-          DOCS=$GSF_DOCS envsubst < message.html > message.html
+          VERSION=$GSF_VERSION ENVIRONMENT=$GSF_ENV DOCS=$GSF_DOCS envsubst < ./main/ci/splice_release_message.html.template > message.html
 
           echo "Updating draft with message content"
           curl "${curl_options[@]}" -X POST \
@@ -164,7 +166,7 @@ jobs:
             -d "csrf=$CSRF_TOKEN" \
             -d "draft_id=$DRAFT_ID" \
             -d "group_id=$VALIDATOR_OPERATORS_GROUP_ID" \
-            -d "subject=Splice release ${GSF_VERSION} is ready for deployment on ${GSF_ENV}" \
+            -d "subject=Splice release ${{ env.GSF_DEVNET_VERSION }} is ready for deployment on DevNet" \
             --data-urlencode "body@message.html"
 
           echo "Posting the draft"
