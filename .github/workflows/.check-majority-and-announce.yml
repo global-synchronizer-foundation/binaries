@@ -29,10 +29,6 @@ jobs:
     permissions:
       contents: write # Need to write to announce-tracking branch
       packages: write # Needed for Devnet only. Write to packages when copy images/charts from splice.
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_REPO: ${{ github.repository }}
-      GITHUB_ACTOR: ${{ github.actor }}
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -98,6 +94,10 @@ jobs:
 
       - name: Run copy-binaries Script
         if: ${{ inputs.environment == 'DevNet' && steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
         run: |
           ./main/ci/gsf-copy-binaries.sh
 
@@ -166,7 +166,7 @@ jobs:
             -d "csrf=$CSRF_TOKEN" \
             -d "draft_id=$DRAFT_ID" \
             -d "group_id=$VALIDATOR_OPERATORS_GROUP_ID" \
-            -d "subject=Splice release ${{ env.GSF_DEVNET_VERSION }} is ready for deployment on DevNet" \
+            -d "subject=Splice release $GSF_VERSION is ready for deployment on $GSF_ENV" \
             --data-urlencode "body@message.html"
 
           echo "Posting the draft"
