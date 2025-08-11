@@ -23,6 +23,10 @@ on:
 
 permissions: {}
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 jobs:
   check-and-announce:
     runs-on: ubuntu-latest
