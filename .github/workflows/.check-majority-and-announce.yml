@@ -124,6 +124,24 @@ jobs:
                     *SV node status here*: https://sync.global/sv-network
                     *Release notes here*: ${{ env.GSF_DOCS }}/release_notes.html
 
+      - name: Announce the release to validator-operators-onboarding
+        if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
+        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 #v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ env.GSF_ENV }}"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: |
+                    :tada: Splice release `${{ env.GSF_VERSION }}` is ready for deployment on ${{ env.GSF_ENV }}, and is available from the GSF
+                    :ship: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
+                    *SV node status here*: https://sync.global/sv-network
+                    *Release notes here*: ${{ env.GSF_DOCS }}/release_notes.html
+
       - name: Announce to validator-announce@lists.sync.global
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
         env:
