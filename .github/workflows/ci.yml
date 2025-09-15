@@ -18,6 +18,7 @@ jobs:
       info_url: https://docs.dev.global.canton.network.sync.global
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING: ${{ secrets.SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING }}
       GROUPS_IO_USER: ${{ secrets.GROUPS_IO_USER }}
       GROUPS_IO_PASS: ${{ secrets.GROUPS_IO_PASS }}
 
@@ -31,6 +32,7 @@ jobs:
       info_url: https://docs.test.global.canton.network.sync.global
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING: ${{ secrets.SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING }}
       GROUPS_IO_USER: ${{ secrets.GROUPS_IO_USER }}
       GROUPS_IO_PASS: ${{ secrets.GROUPS_IO_PASS }}
 
@@ -44,5 +46,6 @@ jobs:
       info_url: https://docs.global.canton.network.sync.global
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING: ${{ secrets.SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING }}
       GROUPS_IO_USER: ${{ secrets.GROUPS_IO_USER }}
       GROUPS_IO_PASS: ${{ secrets.GROUPS_IO_PASS }}
