@@ -16,6 +16,8 @@ on:
     secrets:
       SLACK_WEBHOOK_URL:
         required: true
+      SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING:
+        required: true
       GROUPS_IO_USER:
         required: true
       GROUPS_IO_PASS:
