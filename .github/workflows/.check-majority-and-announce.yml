@@ -114,7 +114,7 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          payload: |
+          payload: &slack-payload |
             text: "Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ env.GSF_ENV }}"
             blocks:
               - type: "section"
@@ -132,17 +132,7 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING }}
           webhook-type: incoming-webhook
-          payload: |
-            text: "Splice release ${{ env.GSF_VERSION }} is ready for deployment on ${{ env.GSF_ENV }}"
-            blocks:
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: |
-                    :tada: Splice release `${{ env.GSF_VERSION }}` is ready for deployment on ${{ env.GSF_ENV }}, and is available from the GSF
-                    :ship: ⅔ of Super Validator nodes have upgraded to this release, including the GSF Super Validator node
-                    *SV node status here*: https://sync.global/sv-network
-                    *Release notes here*: ${{ env.GSF_DOCS }}/release_notes.html
+          payload: *slack-payload
 
       - name: Announce to validator-announce@lists.sync.global
         if: steps.check-majority.outputs.svs_majority == 'true' && steps.check-announced.outputs.already_announced == 'false'
@@ -220,17 +210,17 @@ jobs:
 
           while [ $COUNT -le $MAX_RETRIES ]; do
             echo "[INFO] Attempt $((COUNT + 1)) to rebase and push"
-          
+
             git fetch origin "$BRANCH"
             git checkout -B "$BRANCH" "origin/$BRANCH"
-          
+
             if ! git pull --rebase origin "$BRANCH"; then
               echo "[WARN] Pull with rebase failed"
               COUNT=$((COUNT + 1))
               sleep 2
               continue
             fi
-          
+
             # Only modify file AFTER successful rebase
             if ! grep -qxF "$GSF_VERSION" "$FILE"; then
               echo "$GSF_VERSION" >> "$FILE"
@@ -241,7 +231,7 @@ jobs:
               SUCCESS=true
               break
             fi
-          
+
             if git push origin "$BRANCH"; then
               echo "[INFO] Push succeeded"
               SUCCESS=true
