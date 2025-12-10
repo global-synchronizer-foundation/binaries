@@ -18,6 +18,8 @@ on:
         required: true
       SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING:
         required: true
+      SLACK_WEBHOOK_URL_VALIDATOR_ONBOARDING2:
+        required: true
       GROUPS_IO_USER:
         required: true
       GROUPS_IO_PASS:
