@@ -75,14 +75,22 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Check if version already announced
+      - name: Check if version already announced and not skipped
         id: check-announced
         run: |
           ENV_LOWER=$(echo "${GSF_ENV}" | tr '[:upper:]' '[:lower:]')
-          FILE="tracking/ci/announced-${ENV_LOWER}.txt"
-          if [ -f "$FILE" ] && grep -qxF "${GSF_VERSION}" "$FILE"; then
+          ANNOUNCED_FILE="tracking/ci/announced-${ENV_LOWER}.txt"
+          SKIPPED_FILE="tracking/ci/skipped-${ENV_LOWER}.txt"
+          
+          # Check if version is in announced file
+          if [ -f "$ANNOUNCED_FILE" ] && grep -qxF "${GSF_VERSION}" "$ANNOUNCED_FILE"; then
             echo "already_announced=true" >> $GITHUB_OUTPUT
             echo "Version ${GSF_VERSION} has already been announced for ${GSF_ENV}." | \
+              tee -a "$GITHUB_STEP_SUMMARY"
+          # Check if version is in skipped file
+          elif [ -f "$SKIPPED_FILE" ] && grep -qxF "${GSF_VERSION}" "$SKIPPED_FILE"; then
+            echo "already_announced=true" >> $GITHUB_OUTPUT
+            echo "Version ${GSF_VERSION} has been skipped for ${GSF_ENV} and will not be announced." | \
               tee -a "$GITHUB_STEP_SUMMARY"
           else
             echo "already_announced=false" >> $GITHUB_OUTPUT
