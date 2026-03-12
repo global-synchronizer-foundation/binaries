@@ -40,12 +40,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: main
 
       - name: Checkout announce-tracking branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: announce-tracking
           path: tracking
